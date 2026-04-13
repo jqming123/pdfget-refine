@@ -237,7 +237,7 @@ class PMCOAService:
 
     def _extract_pdf_from_tgz(self, tgz_path: str, pmcid: str) -> str | None:
         """
-        从 tar.gz 文件中提取 PDF
+        从 tar.gz 文件中提取与 nxml 同名的 PDF
 
         Args:
             tgz_path: tar.gz 文件路径
@@ -250,21 +250,36 @@ class PMCOAService:
             import tarfile
 
             with tarfile.open(tgz_path, "r:gz") as tar:
-                # 查找 PDF 文件
-                pdf_files = [f for f in tar.getnames() if f.lower().endswith(".pdf")]
+                for member in tar.getmembers():
+                    if not member.isfile() or not member.name.lower().endswith(".nxml"):
+                        continue
 
-                if pdf_files:
-                    # 使用第一个 PDF 文件
-                    pdf_file = pdf_files[0]
-                    tar.extract(pdf_file, path=self.output_dir)
+                    pdf_name = str(Path(member.name).with_suffix(".pdf"))
 
-                    # 获取提取的 PDF 路径
-                    extracted_pdf = self.output_dir / pdf_file
-                    if extracted_pdf.exists():
-                        self.logger.info(f"Extracted PDF from tar.gz: {extracted_pdf}")
-                        return str(extracted_pdf)
+                    try:
+                        pdf_member = tar.getmember(pdf_name)
+                    except KeyError:
+                        continue
 
-            self.logger.warning(f"No PDF found in tar.gz file: {tgz_path}")
+                    if not pdf_member.isfile():
+                        continue
+
+                    extracted_pdf = self.output_dir / pdf_member.name
+                    extracted_pdf.parent.mkdir(parents=True, exist_ok=True)
+
+                    extracted_file = tar.extractfile(pdf_member)
+                    if extracted_file is None:
+                        continue
+
+                    with extracted_file, open(extracted_pdf, "wb") as output_file:
+                        output_file.write(extracted_file.read())
+
+                    self.logger.info(f"Extracted PDF from tar.gz: {extracted_pdf}")
+                    return str(extracted_pdf)
+
+            self.logger.warning(
+                f"No PDF matching nxml filename found in tar.gz file: {tgz_path}"
+            )
             return None
 
         except (tarfile.TarError, OSError) as e:

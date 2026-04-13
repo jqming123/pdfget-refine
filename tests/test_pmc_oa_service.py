@@ -5,6 +5,8 @@
 这个测试文件遵循TDD原则，先写测试，再实现代码。
 """
 
+import io
+import tarfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
@@ -250,6 +252,44 @@ class TestPMCOAService:
             mock_file().write.assert_any_call(b"pdf content chunk 1")
             mock_file().write.assert_any_call(b"pdf content chunk 2")
 
+    def test_extract_pdf_from_tgz_matches_nxml_filename(self, tmp_path):
+        """
+        测试: 从 tar.gz 中提取与 nxml 同名的 PDF
+
+        测试目标：
+        - 识别 tar.gz 中的 nxml 文件
+        - 提取和 nxml 同名的 PDF
+        - 不受其他 PDF 文件干扰
+        """
+        from src.pdfget.pmc_oa_service import PMCOAService
+
+        session = Mock(spec=requests.Session)
+        output_dir = tmp_path / "pdfs"
+        service = PMCOAService(str(output_dir), session)
+
+        tgz_path = tmp_path / "sample.tar.gz"
+        with tarfile.open(tgz_path, "w:gz") as tar:
+            other_pdf_data = b"other pdf content"
+            other_pdf_info = tarfile.TarInfo("unrelated.pdf")
+            other_pdf_info.size = len(other_pdf_data)
+            tar.addfile(other_pdf_info, io.BytesIO(other_pdf_data))
+
+            nxml_data = b"<article></article>"
+            nxml_info = tarfile.TarInfo("article.nxml")
+            nxml_info.size = len(nxml_data)
+            tar.addfile(nxml_info, io.BytesIO(nxml_data))
+
+            pdf_data = b"matched pdf content"
+            pdf_info = tarfile.TarInfo("article.pdf")
+            pdf_info.size = len(pdf_data)
+            tar.addfile(pdf_info, io.BytesIO(pdf_data))
+
+        extracted = service._extract_pdf_from_tgz(str(tgz_path), "PMC123456")
+
+        assert extracted is not None
+        assert extracted == str(output_dir / "article.pdf")
+        assert (output_dir / "article.pdf").read_bytes() == b"matched pdf content"
+
     def test_process_pmcid_with_pdf(self):
         """
         测试: 处理有 PDF 格式的 PMCID
@@ -355,8 +395,8 @@ class TestPMCOAService:
         filename = service._get_safe_filename("PMC123456", "")
         assert filename == "PMC123456_unknown.pdf"
 
-        # 测试None DOI
-        filename = service._get_safe_filename("PMC123456", None)
+        # 测试空字符串 DOI
+        filename = service._get_safe_filename("PMC123456", "")
         assert filename == "PMC123456_unknown.pdf"
 
     @pytest.mark.integration
