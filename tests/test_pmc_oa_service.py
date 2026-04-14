@@ -410,11 +410,19 @@ class TestPMCOAService:
         tgz_path = tmp_path / "PMC123456.tar.gz"
         output_pdf_path = tmp_path / "PMC123456.pdf"
 
-        source_pdf = tmp_path / "main.pdf"
+        nxml_file = tmp_path / "article.nxml"
+        nxml_file.write_bytes(b"<article></article>")
+
+        source_pdf = tmp_path / "article.pdf"
         source_pdf.write_bytes(b"test-pdf-content")
 
+        other_pdf = tmp_path / "supplement.pdf"
+        other_pdf.write_bytes(b"supplement-content")
+
         with tarfile.open(tgz_path, "w:gz") as tar:
-            tar.add(source_pdf, arcname="PMC123456/main.pdf")
+            tar.add(nxml_file, arcname="PMC123456/article.nxml")
+            tar.add(source_pdf, arcname="PMC123456/article.pdf")
+            tar.add(other_pdf, arcname="PMC123456/supplement.pdf")
 
         extracted = service._extract_pdf_from_tgz(str(tgz_path), str(output_pdf_path))
 
