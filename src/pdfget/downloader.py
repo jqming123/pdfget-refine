@@ -147,6 +147,46 @@ class PDFDownloader:
         except Exception as e:
             return {"success": False, "error": f"未知错误: {str(e)}"}
 
+    def _find_extracted_pdf_for_pmcid(self, pmcid: str) -> Path | None:
+        """
+        根据 tar.gz 包内 nxml 同名规则定位已提取的 PDF 文件路径
+
+        Args:
+            pmcid: 标准化 PMCID（以 PMC 开头）
+
+        Returns:
+            匹配到的 PDF 路径，未找到返回 None
+        """
+        import tarfile
+
+        tgz_path = self.output_dir / f"{pmcid}.tar.gz"
+        if not tgz_path.exists():
+            return None
+
+        try:
+            with tarfile.open(tgz_path, "r:gz") as tar:
+                for member in tar.getmembers():
+                    if not member.isfile() or not member.name.lower().endswith(".nxml"):
+                        continue
+
+                    pdf_name = str(Path(member.name).with_suffix(".pdf"))
+                    try:
+                        pdf_member = tar.getmember(pdf_name)
+                    except KeyError:
+                        continue
+
+                    if not pdf_member.isfile():
+                        continue
+
+                    candidate = self.output_dir / pdf_member.name
+                    if candidate.exists():
+                        return candidate
+
+        except (tarfile.TarError, OSError) as e:
+            self.logger.debug(f"读取 tar.gz 定位提取 PDF 失败: {e}")
+
+        return None
+
     def download_pdf(self, pmcid: str, doi: str) -> dict[str, Any]:
         """
         下载 PDF 文件
@@ -176,13 +216,11 @@ class PDFDownloader:
 
             # 如果直接PDF不存在，检查是否有从tar.gz提取的PDF
             if not pdf_path.exists():
-                # 查找可能被提取的PDF文件
-                pdf_files = list(self.output_dir.glob(f"{pmcid}*/**/*.pdf"))
-                if pdf_files:
-                    pdf_path = pdf_files[0]
-                    # 重命名为标准格式
+                extracted_pdf = self._find_extracted_pdf_for_pmcid(pmcid)
+                if extracted_pdf is not None:
                     new_path = self.output_dir / pdf_name
-                    pdf_path.rename(new_path)
+                    if extracted_pdf != new_path:
+                        extracted_pdf.rename(new_path)
                     pdf_path = new_path
 
             if pdf_path.exists():
