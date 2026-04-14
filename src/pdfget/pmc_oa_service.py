@@ -211,12 +211,12 @@ class PMCOAService:
         pdf_links = [link for link in links if link["format"] == "pdf"]
         tgz_links = [link for link in links if link["format"] == "tgz"]
 
+        pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+        pdf_path = self.output_dir / pdf_name
+
         # 尝试下载 PDF
         if pdf_links:
             pdf_link = pdf_links[0]
-            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
-            pdf_path = self.output_dir / pdf_name
-
             if self._download_file(pdf_link["href"], str(pdf_path), f"PDF for {pmcid}"):
                 success = True
 
@@ -228,20 +228,27 @@ class PMCOAService:
             if self._download_file(
                 tgz_link["href"], str(tgz_path), f"tar.gz for {pmcid}"
             ):
-                # 尝试从 tar.gz 中提取 PDF
-                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), pmcid)
+                # 尝试从 tar.gz 中提取 PDF 到最终目标路径
+                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), str(pdf_path))
                 if extracted_pdf:
                     success = True
 
+            # 无论提取是否成功都删除中间 tar.gz，避免输出目录污染
+            try:
+                if tgz_path.exists():
+                    tgz_path.unlink()
+            except OSError as exc:
+                self.logger.debug(f"Failed to remove temp tar.gz {tgz_path}: {exc}")
+
         return success
 
-    def _extract_pdf_from_tgz(self, tgz_path: str, pmcid: str) -> str | None:
+    def _extract_pdf_from_tgz(self, tgz_path: str, output_pdf_path: str) -> str | None:
         """
         从 tar.gz 文件中提取与 nxml 同名的 PDF
 
         Args:
             tgz_path: tar.gz 文件路径
-            pmcid: PMCID
+            output_pdf_path: 提取后的目标 PDF 路径
 
         Returns:
             成功返回 PDF 文件路径，失败返回 None
@@ -264,18 +271,22 @@ class PMCOAService:
                     if not pdf_member.isfile():
                         continue
 
-                    extracted_pdf = self.output_dir / pdf_member.name
-                    extracted_pdf.parent.mkdir(parents=True, exist_ok=True)
+                    # 兼容旧调用：若未传入 .pdf 目标路径，则使用匹配到的 PDF 文件名写入输出目录
+                    target_path = Path(output_pdf_path)
+                    if target_path.suffix.lower() != ".pdf":
+                        target_path = self.output_dir / Path(pdf_member.name).name
+
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
 
                     extracted_file = tar.extractfile(pdf_member)
                     if extracted_file is None:
                         continue
 
-                    with extracted_file, open(extracted_pdf, "wb") as output_file:
+                    with extracted_file, open(target_path, "wb") as output_file:
                         output_file.write(extracted_file.read())
 
-                    self.logger.info(f"Extracted PDF from tar.gz: {extracted_pdf}")
-                    return str(extracted_pdf)
+                    self.logger.info(f"Extracted PDF from tar.gz: {target_path}")
+                    return str(target_path)
 
             self.logger.warning(
                 f"No PDF matching nxml filename found in tar.gz file: {tgz_path}"
