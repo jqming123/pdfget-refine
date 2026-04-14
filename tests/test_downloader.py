@@ -332,6 +332,27 @@ class TestPDFDownloader:
         assert info["pdf_sources"] == ["source1", "source2", "source3"]
         assert "output_dir" in info
 
+    def test_cleanup_pmc_download_artifacts(self, downloader, tmp_dir):
+        """测试: 只保留最终 PDF，清理 tar.gz 和解压目录。"""
+        final_pdf = tmp_dir / "PMC123456_101000test.pdf"
+        redundant_pdf = tmp_dir / "PMC123456.pdf"
+        tar_file = tmp_dir / "PMC123456.tar.gz"
+        extracted_dir = tmp_dir / "PMC123456"
+        extracted_pdf = extracted_dir / "main.pdf"
+
+        final_pdf.write_bytes(b"final")
+        redundant_pdf.write_bytes(b"redundant")
+        tar_file.write_bytes(b"tar")
+        extracted_dir.mkdir(parents=True, exist_ok=True)
+        extracted_pdf.write_bytes(b"extracted")
+
+        downloader._cleanup_pmc_download_artifacts("PMC123456", final_pdf)
+
+        assert final_pdf.exists()
+        assert not redundant_pdf.exists()
+        assert not tar_file.exists()
+        assert not extracted_dir.exists()
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

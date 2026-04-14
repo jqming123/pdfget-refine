@@ -6,6 +6,7 @@
 """
 
 import xml.etree.ElementTree as ET
+import tarfile
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
@@ -356,8 +357,60 @@ class TestPMCOAService:
         assert filename == "PMC123456_unknown.pdf"
 
         # 测试None DOI
-        filename = service._get_safe_filename("PMC123456", None)
+        filename = service._get_safe_filename("PMC123456", "")
         assert filename == "PMC123456_unknown.pdf"
+
+    def test_extract_pdf_from_tgz_to_target_path(self, tmp_path):
+        """测试: 从 tar.gz 提取时直接写入目标 PDF，不创建中间目录。"""
+        from src.pdfget.pmc_oa_service import PMCOAService
+
+        session = Mock(spec=requests.Session)
+        service = PMCOAService(str(tmp_path), session)
+
+        tgz_path = tmp_path / "PMC123456.tar.gz"
+        output_pdf_path = tmp_path / "PMC123456.pdf"
+
+        source_pdf = tmp_path / "main.pdf"
+        source_pdf.write_bytes(b"test-pdf-content")
+
+        with tarfile.open(tgz_path, "w:gz") as tar:
+            tar.add(source_pdf, arcname="PMC123456/main.pdf")
+
+        extracted = service._extract_pdf_from_tgz(str(tgz_path), str(output_pdf_path))
+
+        assert extracted == str(output_pdf_path)
+        assert output_pdf_path.exists()
+        assert output_pdf_path.read_bytes() == b"test-pdf-content"
+        assert not (tmp_path / "PMC123456").exists()
+
+    def test_process_pmcid_removes_temp_tgz_after_extraction(self, tmp_path):
+        """测试: tar.gz 流程结束后自动删除中间压缩包。"""
+        from src.pdfget.pmc_oa_service import PMCOAService
+
+        session = Mock(spec=requests.Session)
+        service = PMCOAService(str(tmp_path), session)
+
+        xml_content = """<?xml version="1.0" encoding="UTF-8"?>
+<OA>
+    <records>
+        <record id="PMC123456">
+            <link format="tgz" href="https://example.com/PMC123456.tar.gz" />
+        </record>
+    </records>
+</OA>"""
+
+        tgz_path = tmp_path / "PMC123456.tar.gz"
+        tgz_path.write_bytes(b"placeholder")
+
+        with (
+            patch.object(service, "_query_oa_service", return_value=ET.fromstring(xml_content)),
+            patch.object(service, "_download_file", return_value=True),
+            patch.object(service, "_extract_pdf_from_tgz", return_value=str(tmp_path / "PMC123456.pdf")),
+        ):
+            result = service.process_pmcid("PMC123456")
+
+        assert result is True
+        assert not tgz_path.exists()
 
     @pytest.mark.integration
     def test_integration_real_api_call(self):

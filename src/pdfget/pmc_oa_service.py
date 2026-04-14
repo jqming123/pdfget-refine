@@ -211,12 +211,12 @@ class PMCOAService:
         pdf_links = [link for link in links if link["format"] == "pdf"]
         tgz_links = [link for link in links if link["format"] == "tgz"]
 
+        pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+        pdf_path = self.output_dir / pdf_name
+
         # 尝试下载 PDF
         if pdf_links:
             pdf_link = pdf_links[0]
-            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
-            pdf_path = self.output_dir / pdf_name
-
             if self._download_file(pdf_link["href"], str(pdf_path), f"PDF for {pmcid}"):
                 success = True
 
@@ -228,20 +228,27 @@ class PMCOAService:
             if self._download_file(
                 tgz_link["href"], str(tgz_path), f"tar.gz for {pmcid}"
             ):
-                # 尝试从 tar.gz 中提取 PDF
-                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), pmcid)
+                # 尝试从 tar.gz 中提取 PDF 到最终目标路径
+                extracted_pdf = self._extract_pdf_from_tgz(str(tgz_path), str(pdf_path))
                 if extracted_pdf:
                     success = True
 
+            # 无论提取是否成功都删除中间 tar.gz，避免输出目录污染
+            try:
+                if tgz_path.exists():
+                    tgz_path.unlink()
+            except OSError as exc:
+                self.logger.debug(f"Failed to remove temp tar.gz {tgz_path}: {exc}")
+
         return success
 
-    def _extract_pdf_from_tgz(self, tgz_path: str, pmcid: str) -> str | None:
+    def _extract_pdf_from_tgz(self, tgz_path: str, output_pdf_path: str) -> str | None:
         """
         从 tar.gz 文件中提取 PDF
 
         Args:
             tgz_path: tar.gz 文件路径
-            pmcid: PMCID
+            output_pdf_path: 提取后的目标 PDF 路径
 
         Returns:
             成功返回 PDF 文件路径，失败返回 None
@@ -250,19 +257,30 @@ class PMCOAService:
             import tarfile
 
             with tarfile.open(tgz_path, "r:gz") as tar:
-                # 查找 PDF 文件
-                pdf_files = [f for f in tar.getnames() if f.lower().endswith(".pdf")]
+                pdf_members = [
+                    member
+                    for member in tar.getmembers()
+                    if member.isfile() and member.name.lower().endswith(".pdf")
+                ]
 
-                if pdf_files:
-                    # 使用第一个 PDF 文件
-                    pdf_file = pdf_files[0]
-                    tar.extract(pdf_file, path=self.output_dir)
+                if pdf_members:
+                    # 选择体积最大的 PDF，通常是正文而不是附录图表
+                    best_member = max(pdf_members, key=lambda member: member.size)
+                    extracted_stream = tar.extractfile(best_member)
+                    if extracted_stream is None:
+                        self.logger.warning(
+                            f"Cannot read PDF stream from tar.gz member: {best_member.name}"
+                        )
+                        return None
 
-                    # 获取提取的 PDF 路径
-                    extracted_pdf = self.output_dir / pdf_file
-                    if extracted_pdf.exists():
-                        self.logger.info(f"Extracted PDF from tar.gz: {extracted_pdf}")
-                        return str(extracted_pdf)
+                    output_path = Path(output_pdf_path)
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(output_path, "wb") as pdf_file:
+                        pdf_file.write(extracted_stream.read())
+
+                    if output_path.exists():
+                        self.logger.info(f"Extracted PDF from tar.gz: {output_path}")
+                        return str(output_path)
 
             self.logger.warning(f"No PDF found in tar.gz file: {tgz_path}")
             return None

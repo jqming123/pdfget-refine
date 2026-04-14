@@ -5,6 +5,7 @@ PDF 下载模块
 """
 
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -186,6 +187,7 @@ class PDFDownloader:
                     pdf_path = new_path
 
             if pdf_path.exists():
+                self._cleanup_pmc_download_artifacts(pmcid, pdf_path)
                 self.logger.info(f"PDF 下载成功（PMC OA Service）: {pdf_path}")
                 return {
                     "success": True,
@@ -215,6 +217,33 @@ class PDFDownloader:
         error_msg = f"所有 {len(self.pdf_sources)} 个 PDF 源都失败"
         self.logger.error(error_msg)
         return {"success": False, "error": error_msg}
+
+    def _cleanup_pmc_download_artifacts(self, pmcid: str, keep_pdf: Path) -> None:
+        """Keep only the final PDF for this PMCID and remove transient artifacts."""
+        # 删除中间 tar.gz 文件
+        tar_path = self.output_dir / f"{pmcid}.tar.gz"
+        if tar_path.exists():
+            try:
+                tar_path.unlink()
+            except OSError as exc:
+                self.logger.debug(f"删除中间文件失败 {tar_path}: {exc}")
+
+        # 删除解压遗留目录（例如 PMC123456/main.pdf）
+        for candidate in self.output_dir.glob(f"{pmcid}*"):
+            if candidate.is_dir():
+                try:
+                    shutil.rmtree(candidate)
+                except OSError as exc:
+                    self.logger.debug(f"删除遗留目录失败 {candidate}: {exc}")
+
+        # 同一个 PMCID 可能留下多个命名版本，保留最终文件，其余删除
+        for candidate_pdf in self.output_dir.glob(f"{pmcid}*.pdf"):
+            if candidate_pdf.resolve() == keep_pdf.resolve():
+                continue
+            try:
+                candidate_pdf.unlink()
+            except OSError as exc:
+                self.logger.debug(f"删除冗余 PDF 失败 {candidate_pdf}: {exc}")
 
     def check_pdf_exists(self, pmcid: str, doi: str) -> bool:
         """
