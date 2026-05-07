@@ -191,13 +191,13 @@ pdfget -s "machine learning cancer" -l 50
 ```
 
 **`-m INPUT`** - 批量输入，支持三种模式：
-- CSV文件路径：`pdfget -m data.csv`
+- CSV / TSV 文件路径：`pdfget -m data.csv`
 - 单个标识符：`pdfget -m "PMC123456"`
 - 逗号分隔列表：`pdfget -m "PMC123,38238491"`
 
 #### 输出控制
 
-**`-c COLUMN`** - CSV列名（默认自动检测：ID>PMCID>doi>pmid>第一列）
+**`-c COLUMN`** - CSV / TSV 列名（默认自动检测：ID>PMCID>doi>pmid>第一列）
 ```bash
 pdfget -m data.csv -c PMCID
 pdfget -m data.csv -c ID
@@ -373,24 +373,36 @@ pdfget -s "cancer" -l 100 --format markdown
 
 `-m` 参数支持三种输入模式，自动识别：
 
-### 模式1：CSV文件路径
+### 模式1：CSV / TSV 文件路径
 
 ```bash
 # 自动检测列名（优先级：ID>PMCID>doi>pmid>第一列）
 pdfget -m examples/identifiers.csv
+
+# TSV 文件同样支持
+pdfget -m examples/identifiers.tsv
 
 # 手动指定列名
 pdfget -m examples/identifiers.csv -c PMCID
 pdfget -m examples/identifiers.csv -c ID
 ```
 
-**示例CSV文件**：
+**示例 CSV 文件**：
 ```csv
 ID,Title,Journal
 PMC123456,Study on AI,Nature
 38238491,Deep Learning Review,Science
 PMC789012,Machine Learning Methods,Cell
 37851234,Neural Network Research,Cell
+```
+
+**示例 TSV 文件**：
+```tsv
+ID\tTitle\tJournal
+PMC123456\tStudy on AI\tNature
+38238491\tDeep Learning Review\tScience
+PMC789012\tMachine Learning Methods\tCell
+37851234\tNeural Network Research\tCell
 ```
 
 ### 模式2：单个标识符

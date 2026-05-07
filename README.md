@@ -6,7 +6,7 @@ PDFGet 是一个面向科研场景的命令行工具，支持 PubMed、Europe PM
 
 ## 当前能力
 
-- 支持 `-s` 按关键词搜索，或 `-m` 直接输入 CSV / 单个标识符 / 逗号分隔列表
+- 支持 `-s` 按关键词搜索，或 `-m` 直接输入 CSV / TSV / 单个标识符 / 逗号分隔列表
 - 支持混合标识符下载：PMCID、PMID、DOI、arXiv ID
 - 支持数据源切换：`pubmed`、`europe_pmc`、`arxiv`、`both`、`all`
 - 支持统计模式、下载模式，以及 `console` / `json` / `markdown` 输出
@@ -77,21 +77,24 @@ pdfget -m "2301.12345" -d
 pdfget -m "PMC123456,38238491,10.1038/xxxx,2301.12345" -d -t 5
 ```
 
-### CSV 批量输入
+### CSV / TSV 批量输入
 
 ```bash
 # 自动识别列名
 pdfget -m identifiers.csv -d
 
-# 指定 CSV 列名
+# TSV 文件同样支持
+pdfget -m identifiers.tsv -d
+
+# 指定 CSV / TSV 列名
 pdfget -m data.csv -c PMCID -d
 ```
 
 ## 常用参数
 
 - `-s QUERY` 搜索文献
-- `-m INPUT` CSV 文件、单个标识符或逗号分隔列表
-- `-c COLUMN` CSV 列名，默认自动检测 `ID`、`PMCID`、`doi`、`pmid`、第一列
+- `-m INPUT` CSV / TSV 文件、单个标识符或逗号分隔列表
+- `-c COLUMN` CSV / TSV 列名，默认自动检测 `ID`、`PMCID`、`doi`、`pmid`、第一列
 - `-d` 下载 PDF；不加时默认输出统计结果
 - `-l NUM` 处理数量，默认 200
 - `-t NUM` 并发线程数，默认 3
