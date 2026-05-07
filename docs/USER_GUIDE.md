@@ -230,6 +230,11 @@ pdfget -s "cancer" -S both -l 50
 pdfget -m data.csv -d -t 5
 ```
 
+**`-aws`** - 使用 AWS S3 访问 PMC OA（无需账号）
+```bash
+pdfget -s "cancer AND pubmed pmc[sb]" -l 20 -d -aws
+```
+
 **`--delay SECONDS`** - 下载延迟时间（秒，默认1.0）
 ```bash
 # 加快下载（适合有API密钥）
@@ -289,8 +294,13 @@ pdfget -s "machine learning" -l 500 -e your-email@example.com -k your-api-key
 - PDF 下载不需要 API 密钥（使用公开的 PMC OA Service）
 - 下载通过以下公开服务进行：
   - PMC Open Access Web Service
+  - PMC OA AWS S3（`-aws` 选项）
   - Europe PMC 直接下载链接
 - 只有 PubMed 搜索和 PMCID 获取需要使用 NCBI E-utilities API
+
+**临时 PMC OA 访问说明**：
+由于 PMC 在 2026-04-13 调整了云端分发结构，部分旧的 OA 文件被移动到 `deprecated/` 目录下。`pdfget` 当前对这些遗留路径使用临时兼容逻辑（在 OA 路径中插入 `deprecated/` 前缀）以维持下载功能；
+此临时方法将在 2026 年 8 月移除（届时遗留目录将被删除），建议用户尽快更新工作流以使用新的 S3 结构或使用 eSearch→S3 管道检索并下载所需文件。
 
 **Europe PMC 说明**：
 - Europe PMC 搜索不需要 API 密钥或邮箱
