@@ -82,6 +82,7 @@ class UnifiedDownloadManager:
         return PaperFetcher(
             cache_dir=str(self.fetcher.cache_dir),
             output_dir=str(self.fetcher.output_dir),
+            use_aws=self.fetcher.use_aws,
         )
 
     def _download_single_task(

@@ -42,6 +42,7 @@ class PaperFetcher(NCBIBaseModule):
         sources: "list[str] | None" = None,
         email: str = "",
         api_key: str = "",
+        use_aws: bool = False,
     ):
         """
         初始化获取器
@@ -84,7 +85,10 @@ class PaperFetcher(NCBIBaseModule):
         self.doi_converter = DOIConverter(
             self.session, email=self.email, api_key=self.api_key
         )
-        self.pdf_downloader = PDFDownloader(str(self.output_dir), self.session)
+        self.use_aws = use_aws
+        self.pdf_downloader = PDFDownloader(
+            str(self.output_dir), self.session, use_aws=self.use_aws
+        )
         self.abstract_supplementor = AbstractSupplementor(timeout=5, delay=0.2)
 
     def _get_cache_key(self, query: str, source: str) -> str:

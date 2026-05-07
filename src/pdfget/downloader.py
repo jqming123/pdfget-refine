@@ -19,7 +19,7 @@ from .retry import retry_with_backoff
 class PDFDownloader:
     """PDF 下载器"""
 
-    def __init__(self, output_dir: str, session: requests.Session):
+    def __init__(self, output_dir: str, session: requests.Session, use_aws: bool = False):
         """
         初始化 PDF 下载器
 
@@ -30,6 +30,7 @@ class PDFDownloader:
         self.logger = get_logger(__name__)
         self.output_dir = Path(output_dir)
         self.session = session
+        self.use_aws = use_aws
 
         # 确保输出目录存在
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -38,6 +39,10 @@ class PDFDownloader:
         from .pmc_oa_service import PMCOAService
 
         self.pmc_oa_service = PMCOAService(str(self.output_dir), session)
+
+        from .pmc_oa_aws import PMCOAAWSService
+
+        self.pmc_oa_aws = PMCOAAWSService(str(self.output_dir), session)
 
         # PDF 下载源（Europe PMC是最可靠的开放获取源）
         self.pdf_sources = [
@@ -208,13 +213,28 @@ class PDFDownloader:
         if not pmcid.startswith("PMC"):
             pmcid = f"PMC{pmcid}"
 
+        pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
+        pdf_path = self.output_dir / pdf_name
+
+        if self.use_aws:
+            self.logger.info("尝试 PMC OA AWS (S3)")
+            aws_result = self.pmc_oa_aws.download_pdf(pmcid, pdf_path)
+            if aws_result.get("success"):
+                self.logger.info(f"PDF 下载成功（PMC OA AWS）: {pdf_path}")
+                return {
+                    "success": True,
+                    "path": str(pdf_path),
+                    "source": "PMC OA AWS",
+                    "content_length": aws_result.get("content_length", 0),
+                    "source_url": aws_result.get("source_url", ""),
+                    "version": aws_result.get("version", ""),
+                }
+            self.logger.info("PMC OA AWS 失败，尝试其他源")
+
         # 首先尝试 PMC OA Service（最可靠）
         self.logger.info("尝试 PMC OA Service")
         if self.pmc_oa_service.process_pmcid(pmcid, doi):
             # 检查是否成功下载了PDF文件
-            pdf_name = self._get_safe_filename(pmcid, doi) if doi else f"{pmcid}.pdf"
-            pdf_path = self.output_dir / pdf_name
-
             # 如果直接PDF不存在，检查是否有从tar.gz提取的PDF
             if not pdf_path.exists():
                 extracted_pdf = self._find_extracted_pdf_for_pmcid(pmcid)
