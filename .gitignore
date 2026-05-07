@@ -159,6 +159,7 @@ Thumbs.db
 temp/
 tmp/
 PROFILE
+.github/agents/
 
 # Test temporary directories
 MagicMock/
