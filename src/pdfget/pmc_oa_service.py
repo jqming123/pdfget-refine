@@ -100,6 +100,13 @@ class PMCOAService:
                 href = href.replace(
                     "ftp://ftp.ncbi.nlm.nih.gov/", "https://ftp.ncbi.nlm.nih.gov/"
                 )
+
+                # 临时兼容：部分 OA 遗留文件已被移动到 /pub/pmc/deprecated/
+                # 如果链接中包含 "/pub/pmc/" 且尚未包含 "deprecated/"，则插入该前缀。
+                # 依据 NCBI 公告，遗留文件会在 2026 年 8 月移除，属于临时兼容处理。
+                if "/pub/pmc/" in href and "/pub/pmc/deprecated/" not in href:
+                    href = href.replace("/pub/pmc/", "/pub/pmc/deprecated/")
+
                 links.append({"format": format_type, "href": href, "updated": updated})
 
         return links
