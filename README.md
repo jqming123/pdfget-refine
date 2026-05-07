@@ -43,6 +43,12 @@ uv sync --dev
 
 ## 快速开始
 
+## 临时 PMC OA 访问说明
+
+注意：PMC 于 2026-04-13 调整了其云端分发结构，部分旧的 OA 文件已被移动到带有 `deprecated/` 前缀的目录中。
+为了保持向后兼容，pdfget 会在对 PMC OA 遗留路径的访问中临时插入 `deprecated/` 前缀以检索这些文件。请注意，该临时兼容方法将在 2026 年 8 月失效（遗留目录将被移除），建议尽快更新自动化脚本以使用新的 S3 结构或参考 NCBI 的 eSearch→S3 管道检索方式。
+
+
 ### 搜索和统计
 
 ```bash
@@ -64,6 +70,9 @@ pdfget -s "large language model" -S all -l 30
 ```bash
 # 下载搜索结果
 pdfget -s "cancer AND pubmed pmc[sb]" -l 20 -d
+
+# 使用 AWS S3 访问 PMC OA（推荐在 PMC OA Web Service 变动时使用）
+pdfget -s "cancer AND pubmed pmc[sb]" -l 20 -d -aws
 
 # 下载 arXiv 论文
 pdfget -s "diffusion model" -S arxiv -l 10 -d
@@ -102,6 +111,7 @@ pdfget -m data.csv -c PMCID -d
 - `-o DIR` 输出目录，默认 `data/pdfs`
 - `-v` 详细输出
 - `-S SOURCE` 数据源，支持 `pubmed`、`europe_pmc`、`arxiv`、`both`、`all`
+- `-aws` 使用 AWS S3 访问 PMC OA（无需账号）
 - `--format FORMAT` 输出格式，支持 `console`、`json`、`markdown`
 - `-e EMAIL` NCBI API 邮箱
 - `-k KEY` NCBI API 密钥

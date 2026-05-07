@@ -53,7 +53,15 @@ def build_parser() -> argparse.ArgumentParser:
 
   # 下载多个标识符（逗号分隔）
     pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
-        """,
+
+    # 使用 AWS S3 访问 PMC OA
+        pdfget -s "cancer AND pubmed pmc[sb]" -l 20 -d -aws
+        
+    临时说明:
+        由于 PMC 在 2026-04-13 调整了云端分发，pdfget 在处理 OA 遗留文件时会临时在路径中插入 `deprecated/` 前缀以便继续访问这些文件；
+        注意该临时方法将在 2026 年 8 月移除（届时遗留目录将被删除），请尽快更新您的工作流以使用新的 S3 前缀或通过 eSearch→S3 管道检索。
+                """,
+
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -74,6 +82,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-d", action="store_true", help="下载 PDF")
     parser.add_argument("-t", type=int, default=3, help="并发线程数（默认 3）")
     parser.add_argument("-v", action="store_true", help="详细输出")
+    parser.add_argument(
+        "-aws",
+        action="store_true",
+        help="通过 AWS S3 访问 PMC OA（无需账号）",
+    )
     parser.add_argument(
         "-S",
         choices=["pubmed", "europe_pmc", "arxiv", "both", "all"],
@@ -294,7 +307,12 @@ def main() -> None:
     if args.v:
         logger.setLevel(logging.DEBUG)
 
-    fetcher = PaperFetcher(cache_dir="data/cache", output_dir=args.o, default_source=args.S)
+    fetcher = PaperFetcher(
+        cache_dir="data/cache",
+        output_dir=args.o,
+        default_source=args.S,
+        use_aws=args.aws,
+    )
 
     logger.info("PDF 下载器启动")
     logger.info(f"   输出目录: {args.o}")
