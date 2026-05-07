@@ -60,8 +60,9 @@ class PaperFetcher(NCBIBaseModule):
 
         # 初始化NCBI基类
         super().__init__(session=requests.Session(), email=email, api_key=api_key)
-
-        # 设置获取器特有属性
+        # 使用配置中的默认值或传入的参数
+        email = email or NCBI_EMAIL
+        api_key = api_key or NCBI_API_KEY
         self.cache_dir = Path(cache_dir)
         self.output_dir = Path(output_dir)
         self.default_source = default_source or DEFAULT_SOURCE
@@ -116,18 +117,17 @@ class PaperFetcher(NCBIBaseModule):
         cache_key = self._get_cache_key(query, source)
 
         # 检查缓存
-        if use_cache:
-            cached_papers = self.cache_manager.get(cache_key, default=[])
-            if cached_papers:
-                self.logger.info(f"从缓存加载 {len(cached_papers)} 条结果")
-                # 如果需要PMCID且缓存中没有，检查并添加
-                if fetch_pmcid and not any(p.get("pmcid") for p in cached_papers):
-                    cached_papers = self.add_pmcids(cached_papers)
-                    # 更新缓存
-                    self.cache_manager.set(
-                        cache_key, cached_papers, ttl=3600
-                    )  # 1小时TTL
-                return cached_papers  # type: ignore[no-any-return]
+        cached_papers = self.cache_manager.get(cache_key) if use_cache else None
+        if cached_papers:
+            self.logger.info(f"从缓存加载 {len(cached_papers)} 条结果")
+            # 如果需要PMCID且缓存中没有，检查并添加
+            if fetch_pmcid and not any(p.get("pmcid") for p in cached_papers):
+                cached_papers = self.add_pmcids(cached_papers)
+                # 更新缓存
+                self.cache_manager.set(
+                    cache_key, cached_papers, ttl=3600
+                )  # 1小时TTL
+            return cached_papers  # type: ignore[no-any-return]
 
         # 执行搜索
         papers = self.searcher.search_papers(query, limit, source)
@@ -208,14 +208,21 @@ class PaperFetcher(NCBIBaseModule):
             deleted_count = self.pdf_downloader.cleanup_old_pdfs(max_age_days=0)
             self.logger.info(f"清理了 {deleted_count} 个 PDF 文件")
 
+    def _get_delimiter_for_path(self, file_path: str) -> str:
+        """根据文件扩展名返回分隔符，默认 CSV 分隔符。"""
+        import os
+
+        _, ext = os.path.splitext(file_path.lower())
+        return "\t" if ext == ".tsv" else ","
+
     def _read_identifiers_from_csv(
         self, csv_path: str, id_column: str = "ID"
     ) -> dict[str, list[str]]:
         """
-        从 CSV 文件读取混合类型的标识符列表
+        从 CSV/TSV 文件读取混合类型的标识符列表
 
         Args:
-            csv_path: CSV 文件路径
+            csv_path: CSV/TSV 文件路径
             id_column: 标识符列名
 
         Returns:
@@ -231,7 +238,9 @@ class PaperFetcher(NCBIBaseModule):
         import os
 
         if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
+            raise FileNotFoundError(f"CSV/TSV 文件不存在: {csv_path}")
+
+        delimiter = self._get_delimiter_for_path(csv_path)
 
         identifiers: dict[str, list[str]] = {
             "pmcids": [],
@@ -241,7 +250,7 @@ class PaperFetcher(NCBIBaseModule):
         }
 
         with open(csv_path, encoding="utf-8") as f:
-            csv_reader = csv.reader(f)
+            csv_reader = csv.reader(f, delimiter=delimiter)
 
             # 读取第一行作为表头
             header = next(csv_reader, None)
@@ -288,7 +297,7 @@ class PaperFetcher(NCBIBaseModule):
                     # 忽略 'unknown' 类型
 
         self.logger.info(
-            f"从 CSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
+            f"从 CSV/TSV 读取标识符: PMCID={len(identifiers['pmcids'])}, "
             f"PMID={len(identifiers['pmids'])}, DOI={len(identifiers['dois'])}, "
             f"arXiv={len(identifiers['arxiv_ids'])}"
         )
@@ -299,10 +308,10 @@ class PaperFetcher(NCBIBaseModule):
         self, csv_path: str, pmcid_column: str = "PMCID"
     ) -> list[str]:
         """
-        从 CSV 文件读取 PMCID 列表
+        从 CSV/TSV 文件读取 PMCID 列表
 
         Args:
-            csv_path: CSV 文件路径
+            csv_path: CSV/TSV 文件路径
             pmcid_column: PMCID 列名（默认 "PMCID"）
 
         Returns:
@@ -312,12 +321,14 @@ class PaperFetcher(NCBIBaseModule):
         import os
 
         if not os.path.exists(csv_path):
-            raise FileNotFoundError(f"CSV 文件不存在: {csv_path}")
+            raise FileNotFoundError(f"CSV/TSV 文件不存在: {csv_path}")
+
+        delimiter = self._get_delimiter_for_path(csv_path)
 
         pmcid_list = []
 
         with open(csv_path, encoding="utf-8") as f:
-            csv_reader = csv.reader(f)
+            csv_reader = csv.reader(f, delimiter=delimiter)
 
             # 读取第一行作为表头
             header = next(csv_reader, None)
@@ -356,10 +367,10 @@ class PaperFetcher(NCBIBaseModule):
         pmcid_column: str = "PMCID",
     ) -> list[dict]:
         """
-        从 CSV 文件读取 PMCID 列表并下载 PDF
+        从 CSV/TSV 文件读取 PMCID 列表并下载 PDF
 
         Args:
-            csv_path: CSV 文件路径
+            csv_path: CSV/TSV 文件路径
             limit: 限制下载数量
             max_workers: 最大并发数
             pmcid_column: PMCID 列名（默认 "PMCID"）
@@ -473,10 +484,10 @@ class PaperFetcher(NCBIBaseModule):
         base_delay: float | None = None,
     ) -> list[dict]:
         """
-        从 CSV 文件读取混合类型标识符（PMCID/PMID/DOI）并下载 PDF
+        从 CSV/TSV 文件读取混合类型标识符（PMCID/PMID/DOI）并下载 PDF
 
         Args:
-            csv_path: CSV 文件路径
+            csv_path: CSV/TSV 文件路径
             id_column: 标识符列名（默认 "ID"）
             limit: 限制下载数量
             max_workers: 最大并发数
@@ -598,7 +609,7 @@ class PaperFetcher(NCBIBaseModule):
             input_str: 输入字符串
 
         Returns:
-            'csv_file': CSV文件路径
+            'csv_file': CSV/TSV文件路径
             'single': 单个标识符
             'multiple': 多个标识符（逗号分隔）
             'invalid': 无效输入
@@ -624,12 +635,12 @@ class PaperFetcher(NCBIBaseModule):
 
     def _auto_detect_column(self, csv_path: str) -> str | None:
         """
-        自动检测CSV列名
+        自动检测CSV/TSV列名
 
         优先级: ID > PMCID > doi > pmid > 第一列
 
         Args:
-            csv_path: CSV文件路径
+            csv_path: CSV/TSV文件路径
 
         Returns:
             检测到的列名，如果文件为空返回None
@@ -639,8 +650,9 @@ class PaperFetcher(NCBIBaseModule):
         priority_columns = ["ID", "PMCID", "doi", "pmid"]
 
         try:
+            delimiter = self._get_delimiter_for_path(csv_path)
             with open(csv_path, encoding="utf-8") as f:
-                csv_reader = csv.reader(f)
+                csv_reader = csv.reader(f, delimiter=delimiter)
                 header = next(csv_reader, None)
 
                 if header is None or not header:
@@ -701,7 +713,7 @@ class PaperFetcher(NCBIBaseModule):
 
         Args:
             input_value: 输入值（文件路径/标识符/逗号分隔列表）
-            column: CSV列名（可选，None时自动检测）
+            column: CSV/TSV列名（可选，None时自动检测）
             limit: 下载数量限制
             max_workers: 并发线程数
             base_delay: 基础延迟时间（秒，None时使用默认值）
@@ -716,8 +728,8 @@ class PaperFetcher(NCBIBaseModule):
             raise ValueError(f"无效的输入: {input_value}")
 
         if input_type == "csv_file":
-            # CSV文件输入
-            self.logger.info(f"检测到CSV文件输入: {input_value}")
+            # CSV/TSV文件输入
+            self.logger.info(f"检测到CSV/TSV文件输入: {input_value}")
 
             # 如果未指定列名，自动检测
             if column is None:
@@ -726,7 +738,7 @@ class PaperFetcher(NCBIBaseModule):
                     self.logger.info(f"自动检测到列名: {detected_column}")
                     column = detected_column
                 else:
-                    raise ValueError(f"无法自动检测CSV列名: {input_value}")
+                    raise ValueError(f"无法自动检测CSV/TSV列名: {input_value}")
 
             # 使用现有的download_from_identifiers方法
             return self.download_from_identifiers(

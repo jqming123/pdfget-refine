@@ -5,6 +5,20 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+- 新增 PMC OA 下载后清理流程，下载完成后会移除中间 tar.gz、解压残留目录和冗余 PDF，保持输出目录整洁。
+
+### Changed
+- 调整 PMC OA 压缩包提取逻辑，改为按 nxml 文件同名规则精确定位 PDF，并直接写入最终目标路径。
+- 下载器在处理 PMC OA 结果时会优先使用精确匹配到的 PDF 文件，而不是遍历目录中第一个可见文件。
+
+### Fixed
+- 修复 PMC OA 解压后 PDF 命名与定位不稳定的问题，避免把错误文件当作最终结果。
+- 修复集成测试对 PMC OA 真实网络回退和清理流程的假设，使测试更贴近实际执行行为。
+- 补充下载器清理中间产物的单元测试，覆盖 tar.gz 删除、解压目录清理和冗余 PDF 清理。
+
 ## [0.1.5] - 2026-04-01
 
 ### Added

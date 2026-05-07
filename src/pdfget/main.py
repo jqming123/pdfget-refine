@@ -42,9 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
   # 并发下载（多线程）
   python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
 
-  # 从 CSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
-  python -m pdfget -m identifiers.csv -t 5
-  python -m pdfget -m pmcids.csv -c PMCID -l 100
+    # 从 CSV/TSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
+    python -m pdfget -m identifiers.csv -t 5
+    python -m pdfget -m pmcids.tsv -c PMCID -l 100
 
   # 下载单个标识符
   python -m pdfget -m "PMC10851947"
@@ -60,12 +60,12 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument("-s", help="搜索文献")
     group.add_argument(
         "-m",
-        help="批量输入（CSV文件/单个标识符/逗号分隔列表），支持混合 PMCID/PMID/DOI/arXiv ID",
+        help="批量输入（CSV/TSV文件/单个标识符/逗号分隔列表），支持混合 PMCID/PMID/DOI/arXiv ID",
     )
 
     parser.add_argument(
         "-c",
-        help="CSV 列名（默认自动检测: ID > PMCID > doi > pmid > 第一列）",
+        help="CSV/TSV 列名（默认自动检测: ID > PMCID > doi > pmid > 第一列）",
     )
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
     parser.add_argument(

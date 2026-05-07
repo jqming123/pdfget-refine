@@ -90,6 +90,36 @@ class TestCSVIdentifierReading(CSVTestMixin):
         assert len(result["pmcids"]) == 1
         assert len(result["pmids"]) == 1
 
+    def test_read_tsv_and_csv_identifiers(self, temp_output_dir):
+        """测试：CSV/TSV 文件读取一致"""
+        csv_data = [
+            ["ID", "Note"],
+            ["PMC10851947", "A"],
+            ["38238491", "B"],
+            ["10.1038/s41586-024-07146-0", "C"],
+        ]
+        csv_file = create_temp_csv_file(csv_data, temp_output_dir, "identifiers.csv")
+
+        tsv_content = (
+            "ID\tNote\n"
+            "PMC10851947\tA\n"
+            "38238491\tB\n"
+            "10.1038/s41586-024-07146-0\tC\n"
+        )
+        tsv_path = temp_output_dir / "identifiers.tsv"
+        tsv_path.write_text(tsv_content)
+
+        csv_result = self.fetcher._read_identifiers_from_csv(
+            str(csv_file), id_column="ID"
+        )
+        tsv_result = self.fetcher._read_identifiers_from_csv(
+            str(tsv_path), id_column="ID"
+        )
+
+        assert csv_result["pmcids"] == tsv_result["pmcids"]
+        assert csv_result["pmids"] == tsv_result["pmids"]
+        assert csv_result["dois"] == tsv_result["dois"]
+
 
 class TestInputTypeDetection(CSVTestMixin):
     """测试输入类型检测功能（从 test_unified_input.py 整合）"""
