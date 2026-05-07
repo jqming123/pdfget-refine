@@ -30,29 +30,29 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="""
 使用示例:
   # 统计 PubMed / Europe PMC 文献的 PMCID 情况
-  python -m pdfget -s "machine learning cancer" -l 5000
+    pdfget -s "machine learning cancer" -l 5000
 
   # 搜索 arXiv 文献
-  python -m pdfget -s "graph neural networks" -S arxiv -l 20
+    pdfget -s "graph neural networks" -S arxiv -l 20
 
   # 搜索并下载前 N 篇文献
-  python -m pdfget -s "deep learning" -l 20 -d
-  python -m pdfget -s "vision transformer" -S arxiv -l 20 -d
+    pdfget -s "deep learning" -l 20 -d
+    pdfget -s "vision transformer" -S arxiv -l 20 -d
 
   # 并发下载（多线程）
-  python -m pdfget -s "cancer immunotherapy" -l 20 -d -t 5
+    pdfget -s "cancer immunotherapy" -l 20 -d -t 5
 
     # 从 CSV/TSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
-    python -m pdfget -m identifiers.csv -t 5
-    python -m pdfget -m pmcids.tsv -c PMCID -l 100
+        pdfget -m identifiers.csv -t 5
+        pdfget -m pmcids.tsv -c PMCID -l 100
 
   # 下载单个标识符
-  python -m pdfget -m "PMC10851947"
-  python -m pdfget -m "10.1016/j.cell.2020.01.021"
-  python -m pdfget -m "2301.12345"
+    pdfget -m "PMC10851947"
+    pdfget -m "10.1016/j.cell.2020.01.021"
+    pdfget -m "2301.12345"
 
   # 下载多个标识符（逗号分隔）
-  python -m pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
+    pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
         """,
     )
 
@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-o", default="data/pdfs", help="输出目录")
     parser.add_argument(
-        "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量"
+        "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量（默认: {DEFAULT_SEARCH_LIMIT}）"
     )
     parser.add_argument("-d", action="store_true", help="下载 PDF")
     parser.add_argument("-t", type=int, default=3, help="并发线程数（默认 3）")
