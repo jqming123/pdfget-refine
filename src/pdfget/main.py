@@ -54,7 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
   # 下载多个标识符（逗号分隔）
     pdfget -m "PMC123456,38238491,10.1038/xxx,2301.12345" -t 3
 
-    # 使用 AWS S3 访问 PMC OA
+  # 使用 AWS S3 访问 PMC OA
         pdfget -s "cancer AND pubmed pmc[sb]" -l 20 -d -aws
         
     临时说明:
