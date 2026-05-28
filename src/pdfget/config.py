@@ -28,8 +28,8 @@ AVG_PDF_SIZE_MB = 1.5  # 平均PDF大小(MB)
 PUBMED_MAX_RESULTS = 10000  # PubMed单次最多返回10000条
 
 # 并发下载设置
-DOWNLOAD_BASE_DELAY = 1.0  # 基础延迟时间(秒)
-DOWNLOAD_RANDOM_DELAY = 0.5  # 随机延迟范围(秒)
+DOWNLOAD_BASE_DELAY = 2.0  # 基础延迟时间(秒)
+DOWNLOAD_RANDOM_DELAY = 1.0  # 随机延迟范围(秒)
 
 # API设置
 HEADERS = {
