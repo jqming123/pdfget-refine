@@ -8,6 +8,7 @@
 - 版本号已切换为 `1.0.0`，作为 fork 后的首个独立发行版本。
 - README、CHANGELOG、LICENSE 已补充仓库继承关系与署名说明。
 - 当前控制台命令仍保留为 `pdfget`，尚未迁移为 `pdfget-refine`。
+- 目前该仓库主要供个人使用，暂不发布在 PyPI
 
 ## 2. 待办项
 

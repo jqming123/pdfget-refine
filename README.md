@@ -1,6 +1,6 @@
 # PDFGet - 智能文献搜索与批量下载工具
 
-![PyPI](https://img.shields.io/pypi/v/pdfget-refine) ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) ![License](https://img.shields.io/pypi/l/pdfget-refine)
+![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](docs/LICENSE.md)
 
 > 注意：本仓库为 [gqy20/pdfget](https://github.com/gqy20/pdfget) 的 fork，基于上游 commit `e0f5da8a493ed88dad50b477f407214e3ca3d4f9`（记录时间：2026-04-01T16:17:46+08:00）。
 > 原始作者：gqy；维护者/贡献者：jqming123。
@@ -22,18 +22,6 @@ PDFGet 是一个面向科研场景的命令行工具，支持 PubMed、Europe PM
 
 - Python 3.12 或更高版本
 
-### 从 PyPI 安装
-
-```bash
-pip install pdfget
-```
-
-### 使用 uv
-
-```bash
-uv add pdfget
-```
-
 ### 从源码安装
 
 ```bash
@@ -44,6 +32,8 @@ pip install -e .
 # 开发环境（推荐）
 uv sync --dev
 ```
+
+> 说明：当前仓库暂未发布到 PyPI，因此这里不提供 `pip install pdfget-refine` 或 `uv add pdfget-refine` 的安装方式。
 
 ### CLI 命名说明
 

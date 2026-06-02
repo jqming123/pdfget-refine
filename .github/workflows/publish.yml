@@ -46,6 +46,17 @@ jobs:
       run: |
         uv run twine check dist/*
 
+    - name: Check PyPI token
+      id: pypi_token
+      env:
+        PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        if [[ -n "$PYPI_API_TOKEN" ]]; then
+          echo "has_token=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_token=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Generate release notes
       id: release_notes
       run: |
@@ -94,14 +105,24 @@ jobs:
         prerelease: false
 
     - name: Publish to PyPI
+      if: steps.pypi_token.outputs.has_token == 'true'
       env:
         PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         uv publish --token $PYPI_API_TOKEN
 
+    - name: Skip PyPI Publish
+      if: steps.pypi_token.outputs.has_token != 'true'
+      run: |
+        echo "PYPI_API_TOKEN is not set; skipping PyPI publish."
+
     - name: Release Confirmation
       if: success()
       run: |
         echo "Release ${{ steps.release_notes.outputs.version }} published successfully!"
-        echo "PyPI: https://pypi.org/project/pdfget/${{ steps.release_notes.outputs.version }}/"
+        if [[ "${{ steps.pypi_token.outputs.has_token }}" == "true" ]]; then
+          echo "PyPI: https://pypi.org/project/pdfget/${{ steps.release_notes.outputs.version }}/"
+        else
+          echo "PyPI: skipped (no token configured)"
+        fi
         echo "GitHub: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
