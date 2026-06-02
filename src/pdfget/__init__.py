@@ -2,9 +2,11 @@
 PDFGet - 智能文献搜索与批量下载工具
 """
 
-__version__ = "0.1.5"
+__version__ = "1.0.0"
 __author__ = "gqy"
 __email__ = "qingyu_ge@foxmail.com"
+__maintainer__ = "jqming123"
+__maintainer_email__ = "jqming123@qq.com"
 __description__ = "智能文献搜索与批量下载工具，支持高级检索和并发下载"
 
 from .counter import PMCIDCounter

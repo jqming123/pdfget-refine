@@ -43,3 +43,11 @@ PDFGet is an intelligent literature search and batch download tool designed for 
 ### 免责声明
 
 本软件仅供学术研究使用。使用者应遵守相关数据库的使用条款和服务条款。软件作者不对因使用本软件而产生的任何法律责任负责。
+
+---
+
+Additional copyright and fork notice
+
+Copyright (c) 2026 jqming123
+
+This repository is a fork of https://github.com/gqy20/pdfget. The original project and its contributors are covered by the MIT License above. This fork is maintained by jqming123.
