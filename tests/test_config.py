@@ -5,8 +5,8 @@
 import os
 
 from pdfget.config import (
-    DELAY,
     DEFAULT_OUTPUT_DIR,
+    DELAY,
     HEADERS,
     LOG_FORMAT,
     LOG_LEVEL,

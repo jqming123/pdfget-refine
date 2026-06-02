@@ -626,8 +626,8 @@ wheels = [
 ]
 
 [[package]]
-name = "pdfget"
-version = "0.1.5"
+name = "pdfget-refine"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "requests" },

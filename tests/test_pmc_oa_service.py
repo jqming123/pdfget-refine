@@ -8,7 +8,6 @@
 import io
 import tarfile
 import xml.etree.ElementTree as ET
-import tarfile
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 

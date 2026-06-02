@@ -4,7 +4,6 @@
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
 import requests
 
 from src.pdfget.pmc_oa_aws import PMCOAAWSService
