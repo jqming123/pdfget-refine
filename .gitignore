@@ -140,6 +140,7 @@ dmypy.json
 
 # Data files - 完全忽略data文件夹
 data/
+pdfs/
 
 # 统计报告（临时生成的）
 pmcid_report.md

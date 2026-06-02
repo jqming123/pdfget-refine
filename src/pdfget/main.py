@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from .config import (
+    DEFAULT_OUTPUT_DIR,
     DEFAULT_SEARCH_LIMIT,
     DEFAULT_SOURCE,
     DOWNLOAD_BASE_DELAY,
@@ -42,7 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
   # 并发下载（多线程）
     pdfget -s "cancer immunotherapy" -l 20 -d -t 5
 
-    # 从 CSV/TSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
+  # 从 CSV/TSV 下载混合标识符（支持 PMCID/PMID/DOI/arXiv ID 混合）
         pdfget -m identifiers.csv -t 5
         pdfget -m pmcids.tsv -c PMCID -l 100
 
@@ -75,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-c",
         help="CSV/TSV 列名（默认自动检测: ID > PMCID > doi > pmid > 第一列）",
     )
-    parser.add_argument("-o", default="data/pdfs", help="输出目录")
+    parser.add_argument("-o", default=DEFAULT_OUTPUT_DIR, help="输出目录")
     parser.add_argument(
         "-l", type=int, default=DEFAULT_SEARCH_LIMIT, help="要处理的文献数量（默认: {DEFAULT_SEARCH_LIMIT}）"
     )
@@ -308,7 +309,6 @@ def main() -> None:
         logger.setLevel(logging.DEBUG)
 
     fetcher = PaperFetcher(
-        cache_dir="data/cache",
         output_dir=args.o,
         default_source=args.S,
         use_aws=args.aws,

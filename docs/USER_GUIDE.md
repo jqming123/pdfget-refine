@@ -257,9 +257,17 @@ pdfget -s "cancer" -l 100 -v
 
 ### 输出目录
 
-**`-o DIR`** - 输出目录（默认 data/pdfs）
+**`-o DIR`** - 输出目录（默认 pdfs）
 ```bash
 pdfget -s "machine learning" -l 50 -d -o ~/papers
+```
+
+### 缓存目录
+
+缓存目录默认使用 `~/.cache/pdfget`，可通过环境变量 `PDFGET_CACHE_DIR` 覆盖。
+
+```bash
+PDFGET_CACHE_DIR=/tmp/pdfget-cache pdfget -s "cancer" -l 100
 ```
 
 ### NCBI API 配置
@@ -332,10 +340,12 @@ pdfget -s "machine learning" -l 500 -e your-email@example.com -k your-api-key
 ### 文件目录结构
 
 ```
-data/
-├── pdfs/           # 下载的PDF文件
-├── cache/          # 缓存文件
+./
+├── pdfs/           # 下载的PDF文件（默认输出目录）
 └── search_results.json  # 搜索结果记录
+
+~/.cache/pdfget/
+└── search_*.json   # 搜索缓存文件
 ```
 
 ### PMCID统计结果
@@ -520,10 +530,10 @@ pdfget -s "cancer" -l 100 -e your-email@example.com -k your-api-key
 **解决方案**：
 ```bash
 # 清理搜索缓存
-rm data/cache/search_*.json
+rm ~/.cache/pdfget/search_*.json
 
 # 清理PDF缓存（如需要）
-rm data/pdfs/*.pdf
+rm pdfs/*.pdf
 ```
 
 ### 文件名显示 unknown

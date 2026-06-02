@@ -5,17 +5,18 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.pdfget.config import CACHE_DIR, COUNT_BATCH_SIZE, COUNT_MAX_WORKERS
+from src.pdfget.config import COUNT_BATCH_SIZE, COUNT_MAX_WORKERS
 from src.pdfget.counter import PMCIDCounter
 
 
 class TestPMCIDCounter:
     """测试 PMCIDCounter 类"""
 
-    def test_init_default_cache_dir(self):
+    def test_init_default_cache_dir(self, monkeypatch, tmp_path):
         """测试使用默认缓存目录初始化"""
+        monkeypatch.setenv("PDFGET_CACHE_DIR", str(tmp_path))
         counter = PMCIDCounter()
-        assert counter.cache_dir == CACHE_DIR
+        assert counter.cache_dir == tmp_path
         assert counter.cache_dir.exists()
 
     def test_init_custom_cache_dir(self):

@@ -108,13 +108,15 @@ pdfget -m data.csv -c PMCID -d
 - `-l NUM` 处理数量，默认 200
 - `-t NUM` 并发线程数，默认 3
 - `--delay SEC` 下载延迟，默认 1.0
-- `-o DIR` 输出目录，默认 `data/pdfs`
+- `-o DIR` 输出目录，默认 `pdfs`
 - `-v` 详细输出
 - `-S SOURCE` 数据源，支持 `pubmed`、`europe_pmc`、`arxiv`、`both`、`all`
 - `-aws` 使用 AWS S3 访问 PMC OA（无需账号）
 - `--format FORMAT` 输出格式，支持 `console`、`json`、`markdown`
 - `-e EMAIL` NCBI API 邮箱
 - `-k KEY` NCBI API 密钥
+
+缓存目录默认 `~/.cache/pdfget`，可通过 `PDFGET_CACHE_DIR` 环境变量覆盖。
 
 ## 结构化输出
 

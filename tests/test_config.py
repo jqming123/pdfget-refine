@@ -3,15 +3,14 @@
 """
 
 import os
-from pathlib import Path
 
 from pdfget.config import (
     DELAY,
+    DEFAULT_OUTPUT_DIR,
     HEADERS,
     LOG_FORMAT,
     LOG_LEVEL,
     MAX_RETRIES,
-    OUTPUT_DIR,
     TIMEOUT,
 )
 
@@ -36,8 +35,8 @@ class TestConfig:
 
     def test_output_dir_constant(self):
         """测试输出目录常量"""
-        assert isinstance(OUTPUT_DIR, (str, Path))
-        assert len(str(OUTPUT_DIR)) > 0
+        assert isinstance(DEFAULT_OUTPUT_DIR, str)
+        assert len(DEFAULT_OUTPUT_DIR) > 0
 
     def test_log_level_constant(self):
         """测试日志级别常量"""

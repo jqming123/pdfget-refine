@@ -18,6 +18,7 @@
 - 下载器在处理 PMC OA 结果时会优先使用精确匹配到的 PDF 文件，而不是遍历目录中第一个可见文件。
  - `PDFDownloader` 支持 `use_aws` 参数，`PaperFetcher` 和 `UnifiedDownloadManager` 已传递该设置以在并发下载中启用 S3 路径。
  - CLI 帮助与 README、用户指南已更新，包含 `-aws` 用法示例与临时迁移说明。
+- 缓存路径调整为 XDG 规范目录 `~/.cache/pdfget`，新增 `PDFGET_CACHE_DIR` 覆盖入口，并将默认输出目录改为相对路径 `pdfs/`（参考原项目作者对缓存路径的调整方向）。
 
 ### Fixed
 - 修复 PMC OA 解压后 PDF 命名与定位不稳定的问题，避免把错误文件当作最终结果。
