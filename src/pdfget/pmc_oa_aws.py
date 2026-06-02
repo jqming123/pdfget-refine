@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import cast
 
 import requests
 
@@ -73,7 +74,7 @@ class PMCOAAWSService:
         versions.sort(key=lambda item: item[0])
         return versions[-1][1]
 
-    def _get_metadata(self, version_id: str) -> dict | None:
+    def _get_metadata(self, version_id: str) -> dict[str, object] | None:
         """Fetch metadata JSON for a specific version id like PMC12345.1."""
         url = f"{self.base_url}/metadata/{version_id}.json"
         try:
@@ -83,7 +84,7 @@ class PMCOAAWSService:
                     f"AWS metadata returned {response.status_code} for {version_id}"
                 )
                 return None
-            return response.json()
+            return cast(dict[str, object], response.json())
         except requests.RequestException as exc:
             self.logger.error(f"AWS metadata request failed for {version_id}: {exc}")
             return None
