@@ -1,4 +1,4 @@
-# PDFGet - 智能文献搜索与批量下载工具
+# PDFGet-refine - 智能文献搜索与批量下载工具
 
 ![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](docs/LICENSE.md)
 
@@ -6,7 +6,7 @@
 > 原始作者：gqy；维护者/贡献者：jqming123。
 
 
-PDFGet 是一个面向科研场景的命令行工具，支持 PubMed、Europe PMC 和 arXiv 的检索、统计与批量下载。
+PDFGet-refine 是一个面向科研场景的命令行工具，支持 PubMed、Europe PMC 和 arXiv 的检索、统计与批量下载。
 
 ## 当前能力
 
